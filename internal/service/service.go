@@ -1,5 +1,7 @@
 package service
 
+import "context"
+
 type Servicer interface {
-	CreateUser(username, email, password string) error
+	CreateUser(context.Context, CreateUserParams) error
 }

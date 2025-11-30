@@ -3,28 +3,21 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/itsDrac/godo/internal/service"
 )
 
-type CreateUserRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
 
 func (h *ChiHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
-	var req CreateUserRequest
+	var req service.CreateUserParams
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	err = h.ser.CreateUser(
-		req.Username, 
-		req.Email, 
-		req.Password,
-	)
+	err = h.ser.CreateUser(r.Context(), req)
 
 	if err != nil {
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)

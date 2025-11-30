@@ -20,18 +20,17 @@ func NewUserService(q *db.Queries) *UserServicer {
 }
 
 // CreateUser creates a new user
-func (s *UserServicer) CreateUser(username, email, password string) error {
+func (s *UserServicer) CreateUser(ctx context.Context, u CreateUserParams) error {
 	// Implement user creation logic here
-	if username == "" || email == "" || password == "" {
-		return fmt.Errorf("username, email and password are required")
+	hashedPassword, err := HashPassword(u.Password)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	ctx := context.Background()
-
 	createdUser, err := s.q.CreateUser(ctx, db.CreateUserParams{
-		Username: username,
-		Email:    email,
-		//PasswordHash: '',
+		Username: u.Username,
+		Email:    u.Email,
+		PasswordHash: hashedPassword,
 	})
 
 	if err != nil {
