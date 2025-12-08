@@ -2,11 +2,12 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"strings"
 
 	"github.com/itsDrac/godo/internal/service"
 )
-
 
 func (h *ChiHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
@@ -20,7 +21,14 @@ func (h *ChiHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	err = h.ser.CreateUser(r.Context(), req)
 
 	if err != nil {
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		log.Printf("CreateUser error: %v", err)
+		le := strings.ToLower(err.Error())
+		if strings.Contains(le, "duplicate") || strings.Contains(le, "unique") {
+			http.Error(w, "Account with that email already exists", http.StatusConflict)
+			return
+		}
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

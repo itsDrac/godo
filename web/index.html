@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>godo - auth demo</title>
+    <style>
+      body { font-family: system-ui, Arial; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+      form { border: 1px solid #ddd; padding: 16px; margin-bottom: 16px; border-radius: 6px; }
+      label { display:block; margin-bottom:8px }
+      input { width:100%; padding:8px; margin-bottom:8px }
+      button { padding:8px 12px }
+      .msg { padding:8px; margin-top:8px }
+      .ok { background:#e6ffed; border:1px solid #b7f0c6 }
+      .err { background:#ffecec; border:1px solid #f0b7b7 }
+    </style>
+  </head>
+  <body>
+    <h1>Login demo</h1>
+
+    <form id="signup">
+      <h2>Sign up</h2>
+      <label>Username<input name="username" required /></label>
+      <label>Email<input name="email" type="email" required /></label>
+      <label>Password<input name="password" type="password" required /></label>
+      <button type="submit">Create account</button>
+      <div id="signup-msg" class="msg"></div>
+    </form>
+
+    <form id="login">
+      <h2>Login</h2>
+      <label>Email<input name="email" type="email" required /></label>
+      <label>Password<input name="password" type="password" required /></label>
+      <button type="submit">Login</button>
+      <div id="login-msg" class="msg"></div>
+    </form>
+
+    <noscript>
+      <div class="msg err">JavaScript is required for this demo. Please enable JavaScript in your browser.</div>
+    </noscript>
+
+    <script>
+    const signupForm = document.getElementById('signup')
+    const loginForm = document.getElementById('login')
+
+    function show(node, message, ok=true){
+      node.textContent = message
+      node.className = 'msg ' + (ok ? 'ok' : 'err')
+    }
+
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const f = e.target
+      const data = {
+        username: f.username.value,
+        email: f.email.value,
+        password: f.password.value,
+      }
+      const msg = document.getElementById('signup-msg')
+      try{
+        // If this page is served from Live Server (port 5500), call backend at :8080
+        const base = window.location.port === '5500' ? 'http://localhost:8080' : ''
+        const res = await fetch(base + '/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        if(res.ok){
+          show(msg, 'Account created successfully', true)
+          f.reset()
+        } else {
+          const text = await res.text()
+          show(msg, 'Failed to create account: ' + text, false)
+        }
+      }catch(err){
+        show(msg, 'Network error: ' + err.message, false)
+      }
+    })
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const f = e.target
+      const data = {
+        email: f.email.value,
+        password: f.password.value,
+      }
+      const msg = document.getElementById('login-msg')
+      try{
+        const base = window.location.port === '5500' ? 'http://localhost:8080' : ''
+        const res = await fetch(base + '/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        if(res.status === 401){
+          show(msg, 'Wrong credentials', false)
+          return
+        }
+        if(res.ok){
+          const body = await res.json()
+          show(msg, 'Login successful — token: ' + body.token, true)
+          f.reset()
+        } else {
+          const text = await res.text()
+          show(msg, 'Login error: ' + text, false)
+        }
+      }catch(err){
+        show(msg, 'Network error: ' + err.message, false)
+      }
+    })
+    </script>
+  </body>
+</html>
