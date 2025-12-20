@@ -14,20 +14,22 @@ type Handler interface {
 }
 
 type ChiHandler struct {
-	router *chi.Mux
-	ser    service.Servicer
+	router      *chi.Mux
+	userService service.UserService
+	authService service.AuthService
 }
 
 func (h *ChiHandler) Router() http.Handler {
 	return h.router
 }
 
-func NewChiHandler(ser service.Servicer) Handler {
+func NewChiHandler(userService service.UserService, authService service.AuthService) Handler {
 	r := chi.NewRouter()
 
 	return &ChiHandler{
-		router: r,
-		ser:    ser,
+		router:      r,
+		userService: userService,
+		authService: authService,
 	}
 }
 

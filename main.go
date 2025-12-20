@@ -10,10 +10,13 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/itsDrac/godo/handler"
 	"github.com/itsDrac/godo/internal/db"
 	"github.com/itsDrac/godo/internal/service"
+	"github.com/itsDrac/godo/internal/tokens"
+	"github.com/itsDrac/godo/utils"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -52,14 +55,27 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
+	defer conn.Close(ctx)
 	if err := runMigrations(ctx, conn); err != nil {
 		log.Fatalf("Migration failed: %v\n", err)
 	}
+	passwordService := service.NewPasswordService(
+		utils.GetEnvAsInt("HASH_COST", 12),
+	)
 
 	query := db.New(conn)
-	userService := service.NewUserService(query)
+	userService := service.NewUserService(query, passwordService)
 
-	handler := handler.NewChiHandler(userService)
+	tokenizer := tokens.NewJWTTokenizer(
+		utils.GetEnv("JWT_SECRET", "dev-secret"),
+		24*time.Hour,
+	)
+	authService := service.NewAuthService(
+		userService,
+		passwordService,
+		tokenizer,
+	)
+	handler := handler.NewChiHandler(userService, authService)
 	handler.Mount()
 	// Server needs handler.
 	serv := http.Server{

@@ -14,7 +14,7 @@ func (h *ChiHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.ser.Login(r.Context(), req)
+	res, err := h.authService.Login(r.Context(), req)
 	if err != nil {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return

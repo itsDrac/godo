@@ -12,15 +12,12 @@ import (
 func (h *ChiHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	var req service.CreateUserParams
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	err = h.ser.CreateUser(r.Context(), req)
-
-	if err != nil {
+	if err := h.userService.CreateUser(r.Context(), req); err != nil {
 		log.Printf("CreateUser error: %v", err)
 		le := strings.ToLower(err.Error())
 		if strings.Contains(le, "duplicate") || strings.Contains(le, "unique") {
